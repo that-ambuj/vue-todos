@@ -1,6 +1,6 @@
 // script
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import type { Ref } from "vue";
 
 interface todo {
@@ -11,23 +11,38 @@ interface todo {
 let id = 0;
 
 const newTodo = ref("");
-const todos: Ref<todo[]> = ref([
-  { id: id++, text: "Learn Go" },
-  { id: id++, text: "Learn Vue" },
-  { id: id++, text: "Complete CS50 Course" },
-  { id: id++, text: "Learn React" },
-]);
+const todos: Ref<todo[]> = ref([]);
 
 function addTodo(): void {
   if (newTodo.value !== "") {
     todos.value.push({ id: id++, text: newTodo.value });
+    setTodos(todos.value);
     newTodo.value = "";
   }
 }
 
 function removeTodo(todo: todo): void {
   todos.value = todos.value.filter((t) => t !== todo);
+  setTodos(todos.value);
 }
+
+function setTodos(todos: todo[]): void {
+  window.localStorage.setItem("Todos", JSON.stringify(todos));
+}
+
+function getTodos(): todo[] {
+  const todos: string = window.localStorage.getItem("Todos");
+  return JSON.parse(todos);
+}
+
+onMounted(() => {
+  todos.value = getTodos();
+});
+
+onUnmounted(() => {
+  setTodos(todos.value);
+  todos.value = [];
+});
 </script>
 
 // template
@@ -43,7 +58,7 @@ function removeTodo(todo: todo): void {
       />
     </form>
 
-    <ul v-auto-animate="{ duration: 400 }" class="list">
+    <ul v-auto-animate="{ duration: 300 }" class="list">
       <li class="todo" v-for="todo in todos" key="todo.id">
         <span class="todo-text">{{ todo.text }}</span>
         <button class="delete" @click="removeTodo(todo)">Delete</button>
@@ -54,6 +69,12 @@ function removeTodo(todo: todo): void {
 
 // styles
 <style scoped>
+.list {
+  display: flex;
+  flex-direction: column;
+  place-items: left;
+  margin-left: -30px;
+}
 .input {
   height: 30px;
   width: 250px;
@@ -76,7 +97,6 @@ function removeTodo(todo: todo): void {
 }
 
 .todo-text {
-  margin-right: 30px;
 }
 
 .hidden {
